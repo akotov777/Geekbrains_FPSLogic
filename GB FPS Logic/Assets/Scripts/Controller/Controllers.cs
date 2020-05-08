@@ -39,12 +39,18 @@ namespace FPSLogic
             ServiceLocator.SetService(new PlayerController(motor));
             ServiceLocator.SetService(new FlashLightController());
             ServiceLocator.SetService(new InputController());
+            ServiceLocator.SetService(new TimeRemainingController());
+            ServiceLocator.SetService(new Inventory());
+            ServiceLocator.SetService(new WeaponController());
+            ServiceLocator.SetService(new SelectionController());
 
-            _controllersToExecute = new IExecute[3];
+            _controllersToExecute = new IExecute[5];
 
             _controllersToExecute[0] = ServiceLocator.Resolve<PlayerController>();
             _controllersToExecute[1] = ServiceLocator.Resolve<FlashLightController>();
             _controllersToExecute[2] = ServiceLocator.Resolve<InputController>();
+            _controllersToExecute[3] = ServiceLocator.Resolve<TimeRemainingController>();
+            _controllersToExecute[4] = ServiceLocator.Resolve<SelectionController>();
         }
 
         #endregion
@@ -64,6 +70,8 @@ namespace FPSLogic
 
             ServiceLocator.Resolve<InputController>().On();
             ServiceLocator.Resolve<PlayerController>().On();
+            ServiceLocator.Resolve<Inventory>().Initialization();
+            ServiceLocator.Resolve<SelectionController>().On();
         }
 
         #endregion
