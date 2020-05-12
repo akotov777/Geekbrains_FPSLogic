@@ -8,20 +8,24 @@ namespace FPSLogic
         #region Fields
 
         private FlashLightModel _flashLightModel;
-        private FlashLightUI _flashLightUI;
 
         #endregion
 
 
         #region Methods
 
-        public override void On()
+        public override void On(params BaseSceneObject[] flashLight)
         {
             if (IsActive) return;
+            if (flashLight.Length > 0)
+                _flashLightModel = flashLight[0] as FlashLightModel;
+
+            if (_flashLightModel == null) return;
+
             if (_flashLightModel.BatteryChargeCurrent <= 0) return;
-            base.On();
+            base.On(_flashLightModel);
             _flashLightModel.Switch(FlashLightActiveType.On);
-            _flashLightUI.SetActive(true);
+            UI.FlashLightUI.SetActive(true);
         }
 
         public override void Off()
@@ -29,7 +33,7 @@ namespace FPSLogic
             if (!IsActive) return;
             base.Off();
             _flashLightModel.Switch(FlashLightActiveType.Off);
-            _flashLightUI.SetActive(false);
+            UI.FlashLightUI.SetActive(false);
         }
 
         #endregion
@@ -39,10 +43,11 @@ namespace FPSLogic
 
         public void Execute()
         {
+            if (_flashLightModel == null) return;
             if (!IsActive)
             {
                 _flashLightModel.ChargeBattery();
-                _flashLightUI.ChargeBarFillAmount = _flashLightModel.BatteryChargeProportion;
+                UI.FlashLightUI.ChargeBarFillAmount = _flashLightModel.BatteryChargeProportion;
                 return;
             }
 
@@ -50,13 +55,11 @@ namespace FPSLogic
 
             if (_flashLightModel.EditBatteryCharge())
             {
-                _flashLightUI.Text = _flashLightModel.BatteryChargeCurrent;
-                _flashLightUI.ChargeBarFillAmount = _flashLightModel.BatteryChargeProportion;
+                UI.FlashLightUI.Text = _flashLightModel.BatteryChargeCurrent;
+                UI.FlashLightUI.ChargeBarFillAmount = _flashLightModel.BatteryChargeProportion;
             }
             else
-            {
                 Off();
-            }
         }
 
         #endregion
@@ -66,8 +69,7 @@ namespace FPSLogic
 
         public void Initialization()
         {
-            _flashLightModel = Object.FindObjectOfType<FlashLightModel>();
-            _flashLightUI = Object.FindObjectOfType<FlashLightUI>();
+            UI.FlashLightUI.SetActive(false);
         }
 
         #endregion

@@ -45,6 +45,7 @@ namespace FPSLogic
         public void SetActive(bool value)
         {
             _text.gameObject.SetActive(value);
+            _chargeBar.gameObject.SetActive(value);
         }
 
         #endregion

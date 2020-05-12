@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using static UnityEngine.Random;
 
 
 namespace FPSLogic
@@ -12,10 +13,13 @@ namespace FPSLogic
         [SerializeField] private float _speed = 11.0f;
         [SerializeField] private float _batteryMaxCharge = 10.0f;
         [SerializeField] private float _chargeSpeed = 1.0f;
+        [SerializeField] private float _maxIntensity = 1.0f;
 
         private Light _light;
         private Transform _objToFollow;
         private Vector3 _offset;
+        private float _share;
+        private float _takeAwayTheIntensity;
 
         #endregion
 
@@ -32,6 +36,14 @@ namespace FPSLogic
             }
         }
 
+        public bool AtLowBattery
+        {
+            get 
+            { 
+                return BatteryChargeCurrent <= _batteryMaxCharge / 2.0f;
+            }
+        }
+
         #endregion
 
 
@@ -44,6 +56,9 @@ namespace FPSLogic
             _objToFollow = Camera.main.transform;
             _offset = Transform.position - _objToFollow.position;
             BatteryChargeCurrent = _batteryMaxCharge;
+            _light.intensity = _maxIntensity;
+            _share = _batteryMaxCharge * 0.25f;
+            _takeAwayTheIntensity = _maxIntensity / (_batteryMaxCharge * 100.0f);
         }
 
         #endregion
@@ -63,6 +78,8 @@ namespace FPSLogic
                 case FlashLightActiveType.Off:
                     _light.enabled = false;
                     break;
+                case FlashLightActiveType.None:
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(value), value, null);
             }
@@ -80,6 +97,10 @@ namespace FPSLogic
             if (BatteryChargeCurrent >= _batteryMaxCharge) return;
 
             BatteryChargeCurrent += Time.deltaTime * _chargeSpeed;
+            
+            if (_light.intensity < _maxIntensity)
+                _light.intensity += _takeAwayTheIntensity;
+            else _light.intensity = _maxIntensity;
         }
 
         public bool EditBatteryCharge()
@@ -87,6 +108,12 @@ namespace FPSLogic
             if (BatteryChargeCurrent > 0)
             {
                 BatteryChargeCurrent -= Time.deltaTime;
+
+                if (BatteryChargeCurrent < _share)
+                    _light.enabled = Range(0.0f, 100.0f) >= Range(0.0f, 10.0f);
+                else
+                    _light.intensity -= _takeAwayTheIntensity;
+
                 return true;
             }
             return false;
