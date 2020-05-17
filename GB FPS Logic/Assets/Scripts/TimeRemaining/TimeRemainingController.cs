@@ -12,6 +12,7 @@ namespace FPSLogic
 
         #endregion
 
+
         #region ClassLifeCycles
 
         public TimeRemainingController()

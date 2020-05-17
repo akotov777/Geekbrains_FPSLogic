@@ -1,12 +1,15 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+
 
 namespace FPSLogic
 {
-    public sealed class EnemyIncreasingArmor : BaseEnemy
+    public sealed class IncreasingArmorEnemyBodyPart : BaseEnemyBodyPart
     {
         #region Fields
 
-        [SerializeField] private float _armor = 0.0f;
+        [SerializeField] private float _initialArmor = 0.0f;
+        [SerializeField] private float _maxArmor = 2.0f;
         [SerializeField] private float _armorIncreaseAmount = 0.1f;
         [SerializeField] private float _chanceToIncreaseArmorAfterHit = 16.0f;
 
@@ -17,16 +20,12 @@ namespace FPSLogic
 
         #region Methods
 
-        protected override float GetDamageToHurt(float initialDamage)
-        {
-            return base.GetDamageToHurt(initialDamage) / _armor;
-        }
-
         private void IncreaseArmor()
         {
+            if (_initialArmor >= _maxArmor) return;
             if (_chanceToIncreaseArmorAfterHit >= _chance.Next(0, 101))
             {
-                _armor += _armorIncreaseAmount;
+                _initialArmor += _armorIncreaseAmount;
             }
         }
 
@@ -37,7 +36,7 @@ namespace FPSLogic
 
         public override void CollisionEnter(InfoCollision info)
         {
-            base.CollisionEnter(info);
+            base.CollisionEnter(new InfoCollision(_initialArmor));
 
             IncreaseArmor();
         }
