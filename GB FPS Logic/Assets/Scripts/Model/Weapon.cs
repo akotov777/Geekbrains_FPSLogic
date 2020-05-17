@@ -110,7 +110,10 @@ namespace FPSLogic
 
         private void InstantiateNewAmmunition()
         {
-            InitializeAmmunition(_pooledAmmunition.Count);
+            if (_pooledAmmunition.Count < 1)
+                InitializeAmmunition(_maxAmmunitionCount);
+            else
+                InitializeAmmunition(_pooledAmmunition.Count);
         }
 
         public void SetPickUpState(bool value)

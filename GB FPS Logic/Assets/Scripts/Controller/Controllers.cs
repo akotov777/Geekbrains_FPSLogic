@@ -43,14 +43,16 @@ namespace FPSLogic
             ServiceLocator.SetService(new Inventory());
             ServiceLocator.SetService(new WeaponController());
             ServiceLocator.SetService(new SelectionController());
+            ServiceLocator.SetService(new BotController());
 
-            _controllersToExecute = new IExecute[5];
+            _controllersToExecute = new IExecute[6];
 
             _controllersToExecute[0] = ServiceLocator.Resolve<PlayerController>();
             _controllersToExecute[1] = ServiceLocator.Resolve<FlashLightController>();
             _controllersToExecute[2] = ServiceLocator.Resolve<InputController>();
             _controllersToExecute[3] = ServiceLocator.Resolve<TimeRemainingController>();
             _controllersToExecute[4] = ServiceLocator.Resolve<SelectionController>();
+            _controllersToExecute[5] = ServiceLocator.Resolve<BotController>();
         }
 
         #endregion
@@ -72,6 +74,7 @@ namespace FPSLogic
             ServiceLocator.Resolve<PlayerController>().On();
             ServiceLocator.Resolve<Inventory>().Initialization();
             ServiceLocator.Resolve<SelectionController>().On();
+            ServiceLocator.Resolve<BotController>().On();
         }
 
         #endregion

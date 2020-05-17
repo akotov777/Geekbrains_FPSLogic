@@ -36,6 +36,12 @@ namespace FPSLogic
             _timeRemainings.Remove(value);
         }
 
+        public static void AddWithReplace(this ITimeRemaining value)
+        {
+            value.RemoveTimeRemaining();
+            value.AddTimeRemaining();
+        }
+
         #endregion
     }
 }
