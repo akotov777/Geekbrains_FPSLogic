@@ -96,6 +96,36 @@ namespace FPSLogic
             get { return _changeStateAfterInspecting; }
         }
 
+        public BaseBotState CurrentBotState
+        {
+            get => _currentState;
+            set
+            {
+                _currentState = value;
+                switch (value)
+                {
+                    case PatrolingBotState patrol:
+                        Color = Color.green;
+                        break;
+                    case InspectingBotState inspect:
+                        Color = Color.yellow;
+                        break;
+                    case HasADetectedTargetBotState hasADetectedEnemy:
+                        Color = Color.red;
+                        break;
+                    case HasLostTargetBotState hasLostEnemy:
+                        Color = Color.blue;
+                        break;
+                    case DeadBotState deadBotState:
+                        Color = Color.gray;
+                        break;
+                    default:
+                        Color = Color.white;
+                        break;
+                }
+            }
+        }
+
         #endregion
 
 
@@ -113,7 +143,7 @@ namespace FPSLogic
             _inspectingBS = new InspectingBotState(this);
             _patrolingBotState = new PatrolingBotState(this);
             GetNewPatrolPoint();
-            _currentState = _patrolingBotState;
+            CurrentBotState = _patrolingBotState;
 
             _changeStateAfterInspecting = new TimeRemaining(SetBotStateToPatroling, _timeToInspect);
         }
@@ -149,7 +179,7 @@ namespace FPSLogic
 
             if (_currentHealt <= 0)
             {
-                SetBotState(DeadBotState);
+                CurrentBotState = DeadBotState;
                 _agent.enabled = false;
                 foreach (var child in GetComponentsInChildren<Transform>())
                 {
@@ -177,11 +207,6 @@ namespace FPSLogic
             return (point - Transform.position).sqrMagnitude <= 1;
         }
 
-        public void SetBotState(BaseBotState state)
-        {
-            _currentState = state;
-        }
-
         public void SetLastTargetPosition()
         {
             _lastTargetPosition = Target.position;
@@ -200,7 +225,7 @@ namespace FPSLogic
         private void SetBotStateToPatroling()
         {
             GetNewPatrolPoint();
-            SetBotState(PatrolingBotState);
+            CurrentBotState = PatrolingBotState;
         }
 
         #endregion
@@ -218,7 +243,7 @@ namespace FPSLogic
                    !(_currentState is DeadBotState)
                )
                    if(Time.frameCount % 4 == 0)
-                       if (IsSeeingEnemy) SetBotState(HasADetectedEnemyBotState);
+                       if (IsSeeingEnemy) CurrentBotState = HasADetectedEnemyBotState;
         }
 
         #endregion

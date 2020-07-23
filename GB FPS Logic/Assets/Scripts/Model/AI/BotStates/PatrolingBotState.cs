@@ -19,7 +19,7 @@ namespace FPSLogic
         {
             _bot.MoveToPoint(_bot.PatrolPoint);
             if (_bot.IsAtPoint(_bot.PatrolPoint))
-                _bot.SetBotState(_bot.InspectingBotState);
+                _bot.CurrentBotState = _bot.InspectingBotState;
         }
 
         #endregion

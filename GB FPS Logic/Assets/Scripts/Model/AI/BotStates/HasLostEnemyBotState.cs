@@ -17,10 +17,9 @@ namespace FPSLogic
 
         public override void Behave()
         {
-            _bot.Color = Color.red;
             _bot.MoveToPoint(_bot.LastTargetPosition);
             if (_bot.IsAtPoint(_bot.LastTargetPosition))
-                _bot.SetBotState(_bot.InspectingBotState);
+                _bot.CurrentBotState = _bot.InspectingBotState;
         }
 
         #endregion

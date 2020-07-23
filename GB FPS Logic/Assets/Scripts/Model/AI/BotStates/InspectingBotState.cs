@@ -17,7 +17,6 @@ namespace FPSLogic
 
         public override void Behave()
         {
-            _bot.Color = Color.blue;
             _bot.ChangeStateAfterInspecting.AddTimeRemaining();
         }
 
