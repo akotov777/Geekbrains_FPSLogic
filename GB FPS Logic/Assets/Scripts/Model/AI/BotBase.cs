@@ -15,17 +15,20 @@ namespace FPSLogic
         [SerializeField] private Transform _target;
         [SerializeField] private Transform _visionOrigin;
         [SerializeField] private float _maxHealth;
-        [SerializeField] private float _timeToResetState = 2.0f;
-        [SerializeField] private float _timeToLoseEnemy = 3.0f;
+        [SerializeField] private float _timeToInspect = 2.0f;
 
         private NavMeshAgent _agent;
+        private BaseBotState _currentState;
+        private DeadBotState _deadBS;
+        private HasADetectedTargetBotState _hasADetectedTargetBS;
+        private HasLostTargetBotState _hasLostTargetBS;
+        private InspectingBotState _inspectingBS;
+        private PatrolingBotState _patrolingBotState;
+        private ITimeRemaining _changeStateAfterInspecting;
         private float _currentHealt;
         private float _timeToDestroy = 10.0f;
         private Vector3 _patrolPoint;
         private Vector3 _lastTargetPosition;
-        private BotState _botState;
-        private ITimeRemaining _resetStateWhileInspecting;
-        private ITimeRemaining _resetStateWhileLostTarget;
 
         public event Action<BotBase> OnDieChange;
 
@@ -48,45 +51,49 @@ namespace FPSLogic
             }
         }
 
-        public bool AtPatrolPoint
+        public float TimeToInspect
         {
-            get
-            {
-                return (_patrolPoint - Transform.position).sqrMagnitude <= 1;
-            }
+            get { return _timeToInspect; }
         }
 
-        private BotState BotState
+        public Vector3 PatrolPoint
         {
-            get => _botState;
-            set
-            {
-                _botState = value;
-                switch (value)
-                {
-                    case BotState.None:
-                        Color = Color.white;
-                        break;
-                    case BotState.Patroling:
-                        Color = Color.green;
-                        break;
-                    case BotState.Inspecting:
-                        Color = Color.yellow;
-                        break;
-                    case BotState.HasDetectedEnemy:
-                        Color = Color.red;
-                        break;
-                    case BotState.HasLostEnemy:
-                        Color = Color.blue;
-                        break;
-                    case BotState.Dead:
-                        Color = Color.gray;
-                        break;
-                    default:
-                        Color = Color.white;
-                        break;
-                }
-            }
+            get { return _patrolPoint; }
+        }
+
+        public Vector3 LastTargetPosition
+        {
+            get { return _lastTargetPosition; }
+        }
+
+        public DeadBotState DeadBotState
+        {
+            get { return _deadBS; }
+        }
+
+        public HasADetectedTargetBotState HasADetectedEnemyBotState
+        {
+            get { return _hasADetectedTargetBS; }
+        }
+
+        public HasLostTargetBotState HasLostEnemyBotState
+        {
+            get { return _hasLostTargetBS; }
+        }
+
+        public InspectingBotState InspectingBotState
+        {
+            get { return _inspectingBS; }
+        }
+
+        public PatrolingBotState PatrolingBotState
+        {
+            get { return _patrolingBotState; }
+        }
+
+        public ITimeRemaining ChangeStateAfterInspecting
+        {
+            get { return _changeStateAfterInspecting; }
         }
 
         #endregion
@@ -99,8 +106,16 @@ namespace FPSLogic
             base.Awake();
             _currentHealt = _maxHealth;
             _agent = GetComponent<NavMeshAgent>();
-            _resetStateWhileInspecting = new TimeRemaining(ResetBotState, _timeToResetState);
-            _resetStateWhileLostTarget = new TimeRemaining(ResetBotState, _timeToLoseEnemy);
+
+            _deadBS = new DeadBotState(this);
+            _hasADetectedTargetBS = new HasADetectedTargetBotState(this);
+            _hasLostTargetBS = new HasLostTargetBotState(this);
+            _inspectingBS = new InspectingBotState(this);
+            _patrolingBotState = new PatrolingBotState(this);
+            GetNewPatrolPoint();
+            _currentState = _patrolingBotState;
+
+            _changeStateAfterInspecting = new TimeRemaining(SetBotStateToPatroling, _timeToInspect);
         }
 
         private void OnEnable()
@@ -126,7 +141,7 @@ namespace FPSLogic
 
         private void Hurt(InfoCollision info)
         {
-            if (BotState == BotState.Dead) return;
+            if (_currentState is DeadBotState) return;
             if (_currentHealt > 0)
             {
                 _currentHealt -= info.Damage;
@@ -134,7 +149,7 @@ namespace FPSLogic
 
             if (_currentHealt <= 0)
             {
-                BotState = BotState.Dead;
+                SetBotState(DeadBotState);
                 _agent.enabled = false;
                 foreach (var child in GetComponentsInChildren<Transform>())
                 {
@@ -152,36 +167,40 @@ namespace FPSLogic
             }
         }
 
-        private void MoveToPoint(Vector3 point)
+        public void MoveToPoint(Vector3 point)
         {
             _agent.SetDestination(point);
         }
 
-        private void Inspect()
+        public bool IsAtPoint(Vector3 point)
         {
-            BotState = BotState.Inspecting;
-            _resetStateWhileInspecting.AddTimeRemaining();
+            return (point - Transform.position).sqrMagnitude <= 1;
         }
 
-        private void GetNewPatrolPoint()
+        public void SetBotState(BaseBotState state)
         {
-            BotState = BotState.Patroling;
-            _patrolPoint = Patrol.GeneratePoint(Transform);
-            MoveToPoint(_patrolPoint);
+            _currentState = state;
         }
 
-        private void LoseEnemy()
+        public void SetLastTargetPosition()
         {
-            BotState = BotState.HasLostEnemy;
             _lastTargetPosition = Target.position;
-            _resetStateWhileLostTarget.AddWithReplace();
-            _resetStateWhileInspecting.RemoveTimeRemaining();
-            MoveToPoint(_lastTargetPosition);
         }
 
-        private void ResetBotState()
+        public void GetNewPatrolPoint()
         {
-            BotState = BotState.None;
+            _patrolPoint = Patrol.GeneratePoint(Transform);
+        }
+
+        public void FireWeapon()
+        {
+            _weapon.Fire();
+        }
+
+        private void SetBotStateToPatroling()
+        {
+            GetNewPatrolPoint();
+            SetBotState(PatrolingBotState);
         }
 
         #endregion
@@ -191,49 +210,15 @@ namespace FPSLogic
 
         public void Execute()
         {
-            if (BotState == BotState.Dead) return;
-
-            if (BotState != BotState.HasDetectedEnemy)
-            {
-                if (!_agent.hasPath)
-                {
-                    if (BotState != BotState.Inspecting)
-                    {
-                        if (BotState != BotState.Patroling)
-                        {
-                            GetNewPatrolPoint();
-                        }
-                        else
-                        {
-                            if (AtPatrolPoint)
-                            {
-                                Inspect();
-                            }
-                        }
-                    }
-                }
-                if (IsSeeingEnemy)
-                {
-                    BotState = BotState.HasDetectedEnemy;
-                }
-            }
-            else
-            {
-                if (IsSeeingEnemy)
-                {
-                    _weapon.Fire();
-                }
-                else
-                {
-                    LoseEnemy();
-                }
-            }
-            if (BotState == BotState.HasLostEnemy)
-            {
-                _lastTargetPosition = Target.position;
-                MoveToPoint(_lastTargetPosition);
-                _agent.stoppingDistance = 0;
-            }
+            _currentState.Behave();
+            if
+               (
+                   !(_currentState is HasADetectedTargetBotState)
+                   &&
+                   !(_currentState is DeadBotState)
+               )
+                   if(Time.frameCount % 4 == 0)
+                       if (IsSeeingEnemy) SetBotState(HasADetectedEnemyBotState);
         }
 
         #endregion
